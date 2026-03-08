@@ -19,11 +19,11 @@ export default function FinanceTracker() {
   const [type, setType] = useState('expense');
   const [budgetLimit, setBudgetLimit] = useState(2000);
 
-  // Search States
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
 
-  // Notification States
+
   const [showBudgetToast, setShowBudgetToast] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -40,7 +40,7 @@ export default function FinanceTracker() {
     localStorage.setItem('personal_budget_limit', JSON.stringify(budgetLimit));
   }, [transactions, budgetLimit]);
 
-  // Handle auto-clearing text while maintaining the view
+
   useEffect(() => {
     if (searchQuery.length > 0) {
       const hasMatch = transactions.some(t =>
@@ -63,7 +63,7 @@ export default function FinanceTracker() {
   const balance = income - expenses;
   const isOverBudget = expenses > budgetLimit;
 
-  // --- CHART DATA PREPARATION ---
+
   const chartData = [
     { name: 'In', value: income, color: '#10b981' },
     { name: 'Out', value: expenses, color: '#f43f5e' },
@@ -89,7 +89,7 @@ export default function FinanceTracker() {
             .reduce((acc, curr) => acc + curr.amount, 0)
       })).filter(item => item.value > 0);
 
-  // Filter based on activeFilter even if searchQuery is empty
+
   const filteredTransactions = useMemo(() => {
     const query = searchQuery || activeFilter;
     return transactions.filter(t =>
