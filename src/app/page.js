@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   PlusCircle, Wallet, ArrowUpCircle, ArrowDownCircle, Trash2, X,
   PieChart as PieIcon, AlertCircle, ShoppingBag, Car, Home, Search,
@@ -18,7 +18,10 @@ export default function FinanceTracker() {
   const [category, setCategory] = useState('');
   const [type, setType] = useState('expense');
   const [budgetLimit, setBudgetLimit] = useState(2000);
+
+  // Search States
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('');
 
   // Notification States
   const [showBudgetToast, setShowBudgetToast] = useState(false);
@@ -36,6 +39,24 @@ export default function FinanceTracker() {
     localStorage.setItem('personal_finance_data', JSON.stringify(transactions));
     localStorage.setItem('personal_budget_limit', JSON.stringify(budgetLimit));
   }, [transactions, budgetLimit]);
+
+  // Handle auto-clearing text while maintaining the view
+  useEffect(() => {
+    if (searchQuery.length > 0) {
+      const hasMatch = transactions.some(t =>
+          t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      if (hasMatch) {
+        // Set the active filter so the list stays filtered
+        setActiveFilter(searchQuery);
+        // Clear the actual input text after a delay
+        const timer = setTimeout(() => setSearchQuery(''), 1000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [searchQuery, transactions]);
 
   const income = transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + curr.amount, 0);
   const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0);
@@ -68,12 +89,14 @@ export default function FinanceTracker() {
             .reduce((acc, curr) => acc + curr.amount, 0)
       })).filter(item => item.value > 0);
 
+  // Filter based on activeFilter even if searchQuery is empty
   const filteredTransactions = useMemo(() => {
+    const query = searchQuery || activeFilter;
     return transactions.filter(t =>
-        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.category.toLowerCase().includes(searchQuery.toLowerCase())
+        t.description.toLowerCase().includes(query.toLowerCase()) ||
+        t.category.toLowerCase().includes(query.toLowerCase())
     );
-  }, [transactions, searchQuery]);
+  }, [transactions, searchQuery, activeFilter]);
 
   useEffect(() => {
     if (isOverBudget) {
@@ -140,7 +163,6 @@ export default function FinanceTracker() {
   return (
       <main className="relative min-h-screen bg-slate-50/50 max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6 md:space-y-10 animate-in fade-in duration-700">
 
-        {/* Dynamic Sequential Toast Stack */}
         <div className="fixed top-4 right-4 left-4 md:left-auto z-[100] flex flex-col gap-2 items-end pointer-events-none">
           {toast.show && (
               <div className={`pointer-events-auto flex items-center gap-2 p-3 px-4 text-white rounded-xl shadow-2xl animate-in slide-in-from-top-2 duration-300 w-full md:w-auto md:min-w-[140px] ${toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'}`}>
@@ -162,7 +184,6 @@ export default function FinanceTracker() {
           )}
         </div>
 
-        {/* Custom Confirmation Modal */}
         {showConfirmModal && (
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
               <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 max-w-sm w-full shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
@@ -318,7 +339,24 @@ export default function FinanceTracker() {
                 <div className="flex items-center gap-2 w-full sm:max-w-xs md:max-w-md">
                   <div className="relative flex items-center flex-1 group">
                     <Search size={14} className="absolute left-4 text-slate-500 group-focus-within:text-slate-900 transition-colors" />
-                    <input type="text" placeholder="Search..." className="w-full pl-10 pr-4 py-2.5 bg-slate-100 rounded-2xl text-[12px] font-black text-slate-900 border-2 border-transparent placeholder:text-slate-500 focus:bg-white focus:border-slate-900 focus:ring-0 outline-none transition-all shadow-inner" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-100 rounded-2xl text-[12px] font-black text-slate-900 border-2 border-transparent placeholder:text-slate-500 focus:bg-white focus:border-slate-900 focus:ring-0 outline-none transition-all shadow-inner"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setActiveFilter(e.target.value); // Sync active filter on manual type
+                        }}
+                    />
+                    {activeFilter && (
+                        <button
+                            onClick={() => {setSearchQuery(''); setActiveFilter('');}}
+                            className="absolute right-3 p-1 text-slate-400 hover:text-slate-900 transition-colors"
+                        >
+                          <X size={12} />
+                        </button>
+                    )}
                   </div>
                   <button onClick={() => setShowConfirmModal(true)} className="flex items-center justify-center p-2.5 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all border-2 border-transparent">
                     <Trash size={14} className="xs:mr-2" />
@@ -333,7 +371,7 @@ export default function FinanceTracker() {
                       <div className="bg-slate-50 p-8 rounded-full mb-6">
                         <Wallet size={40} strokeWidth={1} className="text-slate-400" />
                       </div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-900">{searchQuery ? "No Matches" : "Ledger Clear"}</p>
+                      <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-900">{(searchQuery || activeFilter) ? "No Matches" : "Ledger Clear"}</p>
                     </div>
                 ) : (
                     filteredTransactions.map(t => (
