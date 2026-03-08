@@ -15,7 +15,7 @@ export default function FinanceTracker() {
   const [transactions, setTransactions] = useState([]);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Food');
+  const [category, setCategory] = useState('');
   const [type, setType] = useState('expense');
   const [budgetLimit, setBudgetLimit] = useState(2000);
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,7 +87,10 @@ export default function FinanceTracker() {
 
   const addTransaction = (e) => {
     e.preventDefault();
-    if (!amount || !description || parseFloat(amount) <= 0) return;
+    if (!amount || !description || parseFloat(amount) <= 0 || !category) {
+      triggerToast("Fill all fields", 'error');
+      return;
+    }
     if (type === 'expense' && balance <= 0) {
       triggerToast("Low funds. Log income!", 'error');
       return;
@@ -105,6 +108,7 @@ export default function FinanceTracker() {
     setTransactions([newTransaction, ...transactions]);
     setAmount('');
     setDescription('');
+    setCategory('');
     triggerToast("Logged!", 'success');
   };
 
@@ -226,16 +230,17 @@ export default function FinanceTracker() {
                   <div className="relative flex items-center">
                     <span className="absolute left-3.5 text-slate-400 font-black text-xs">$</span>
                     <input
-                        type="number" placeholder="0.00"
-                        className="w-full p-3.5 pl-7 bg-slate-50 rounded-xl border border-transparent font-black text-sm text-slate-900 focus:bg-white focus:border-slate-200 focus:ring-0 transition-all outline-none"
+                        type="number" placeholder="Amount..."
+                        className="w-full p-3.5 pl-7 bg-slate-50 rounded-xl border border-transparent font-black text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-200 focus:ring-0 transition-all outline-none"
                         value={amount} onChange={(e) => setAmount(e.target.value)}
                     />
                   </div>
                   <select
-                      className="w-full p-3.5 bg-slate-50 rounded-xl border border-transparent font-bold text-xs text-slate-600 focus:bg-white focus:border-slate-200 focus:ring-0 outline-none transition-all cursor-pointer"
+                      className={`w-full p-3.5 bg-slate-50 rounded-xl border border-transparent font-bold text-xs focus:bg-white focus:border-slate-200 focus:ring-0 outline-none transition-all cursor-pointer ${category ? 'text-slate-900' : 'text-slate-400'}`}
                       value={category} onChange={(e) => setCategory(e.target.value)}
                   >
-                    {Object.keys(categoryMap).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    <option value="" disabled hidden>Category...</option>
+                    {Object.keys(categoryMap).map(cat => <option key={cat} value={cat} className="text-slate-900">{cat}</option>)}
                   </select>
                 </div>
                 <div className="flex bg-slate-100 p-1.5 rounded-xl">
