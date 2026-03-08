@@ -182,7 +182,7 @@ export default function FinanceTracker() {
             <div className="bg-slate-900 p-2.5 rounded-2xl text-yellow-400 shadow-sm shrink-0">
               <Sparkles size={20} fill="currentColor" />
             </div>
-            <div className="hidden xs:block">
+            <div className="block">
               <h1 className="text-xl md:text-2xl font-black tracking-tight text-slate-900 leading-none">FinancePulse</h1>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Personal Ledger</p>
             </div>
